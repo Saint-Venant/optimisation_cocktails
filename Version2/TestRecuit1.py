@@ -9,11 +9,11 @@ import numpy as np
 ## Récupération des données initiales : plan basique
 
 #plan basique : traite les commandes comme elles arrivent
-planBasique = planProduction()
+planBasique = planProduction("buffer")
 for com in listeCommandes:
     planBasique.ajouteCommande(com)
-calculeProduction(planBasique, listeCommandes, listeParametres)
-energieBasique = energie1(listeCommandes)
+calculeProduction(planBasique, listeParametres)
+energieBasique = energie1(planBasique)
 
 #temps d'attente par commande
 Y_tempsAttenteBasique = []
@@ -27,16 +27,16 @@ for com in listeCommandes:
         fraicheurBasique.append(b.livraison - b.fin)
 
 #nombre de commandes préparées en parallèle
-paralleleBasique = nbTachesParallelles(listeCommandes)
+paralleleBasique = nbTachesParalleles(planBasique)
 
 ## Récupération des données initiales : plan ultra opti
 
 #plan ultra opti : groupe toutes les boissons par type
-planOpti = planProduction()
+planOpti = planProduction("buffer")
 for com in listeCommandes:
     planOpti.ajouteCommandeUltraOpti(com)
-calculeProduction(planOpti, listeCommandes, listeParametres)
-energieOpti = energie1(listeCommandes)
+calculeProduction(planOpti, listeParametres)
+energieOpti = energie1(planOpti)
 
 #temps d'attente par commande
 Y_tempsAttenteOpti = []
@@ -50,7 +50,7 @@ for com in listeCommandes:
         fraicheurOpti.append(b.livraison - b.fin)
 
 #nombre de commandes préparées en parallèle
-paralleleOpti = nbTachesParallelles(listeCommandes)
+paralleleOpti = nbTachesParalleles(planOpti)
 
 
 ## Test Recuit1
@@ -59,8 +59,8 @@ nbIterations = 120000
 
 plan, listeEnergie = Recuit1(listeCommandes, listeParametres, indexBoissons, nbIterations)
 
-calculeProduction(plan, listeCommandes, listeParametres)
-energiePlan = energie1(listeCommandes)
+calculeProduction(plan, listeParametres)
+energiePlan = energie1(plan)
 
 #temps d'attente par commande
 Y_tempsAttentePlan = []
@@ -74,7 +74,7 @@ for com in listeCommandes:
         fraicheurPlan.append(b.livraison - b.fin)
 
 #nombre de commandes préparées en parallèle
-parallelePlan = nbTachesParallelles(listeCommandes)
+parallelePlan = nbTachesParalleles(plan)
 
 
 ## Résultats

@@ -4,16 +4,17 @@ from Recuit2 import *
 import matplotlib.pyplot as plt
 import numpy as np
 
-random.seed(3)
+random.seed(2)
+np.random.seed(3)
 
 ## Récupération des données initiales : plan basique
 
 #plan basique : traite les commandes comme elles arrivent
-planBasique = planProduction()
+planBasique = planProduction("buffer")
 for com in listeCommandes:
     planBasique.ajouteCommande(com)
-calculeProduction(planBasique, listeCommandes, listeParametres)
-energieBasique = energie1(listeCommandes)
+calculeProduction(planBasique, listeParametres)
+energieBasique = energie1(planBasique)
 
 #temps d'attente par commande
 Y_tempsAttenteBasique = []
@@ -28,16 +29,16 @@ for com in listeCommandes:
         fraicheurBasique.append(b.livraison - b.fin)
 
 #nombre de commandes préparées en parallèle
-paralleleBasique = nbTachesParallelles(listeCommandes)
+paralleleBasique = nbTachesParalleles(planBasique)
 
 ## Récupération des données initiales : plan ultra opti
 
 #plan ultra opti : groupe toutes les boissons par type
-planOpti = planProduction()
+planOpti = planProduction("buffer")
 for com in listeCommandes:
     planOpti.ajouteCommandeUltraOpti(com)
-calculeProduction(planOpti, listeCommandes, listeParametres)
-energieOpti = energie1(listeCommandes)
+calculeProduction(planOpti, listeParametres)
+energieOpti = energie1(planOpti)
 
 #temps d'attente par commande
 Y_tempsAttenteOpti = []
@@ -51,16 +52,16 @@ for com in listeCommandes:
         fraicheurOpti.append(b.livraison - b.fin)
 
 #nombre de commandes préparées en parallèle
-paralleleOpti = nbTachesParallelles(listeCommandes)
+paralleleOpti = nbTachesParalleles(planOpti)
 
 ## Test Recuit2
 
-nbIterations = 500000
+nbIterations = 160000
 
-plan, listeCoutProd, listeCoutAttente, lAlea = Recuit2(listeCommandes, listeParametres, indexBoissons, tempsAttenteCommandeMoyen, nbIterations)
+plan, listeCoutProd, listeCoutAttente = Recuit2(listeCommandes, listeParametres, indexBoissons, tempsAttenteCommandeMoyen, nbIterations)
 
-calculeProduction(plan, listeCommandes, listeParametres)
-energiePlan = energie1(listeCommandes)
+calculeProduction(plan, listeParametres)
+energiePlan = energie1(plan)
 listeEnergieHybride = []
 for i in range(0, len(listeCoutProd)):
     listeEnergieHybride.append(listeCoutProd[i]+listeCoutAttente[i])
@@ -77,7 +78,7 @@ for com in listeCommandes:
         fraicheurPlan.append(b.livraison - b.fin)
 
 #nombre de commandes préparées en parallèle
-parallelePlan = nbTachesParallelles(listeCommandes)
+parallelePlan = nbTachesParalleles(plan)
 
 ## Résultats
 
@@ -161,7 +162,7 @@ print("Gain de productivité Opti : ", int((energieBasique-energieOpti)*100/(ene
 print("Gain de productivité Plan : ", int((energieBasique-energiePlan)*100/(energieBasique-instantDebutProd)), "%")
 print()
 print("tempsAttente :", tempsAttenteCommandeMoyen)
-coutProd, coutAttente = energie2(listeCommandes, tempsAttenteCommandeMoyen)
+coutProd, coutAttente = energie2(plan, tempsAttenteCommandeMoyen)
 print("temps de production", coutProd, "\ncout d'attente client", coutAttente)
 print()
 
@@ -187,8 +188,8 @@ for com in listeCommandes:
 for cl in plan.clusters:
     b1 = cl[0]
     b2 = cl[-1]
-    plt.plot([b1.debut, b1.debut], [-1, len(listeCommandes)], 'k--')
-    plt.plot([b2.fin, b2.fin], [-1, len(listeCommandes)], 'k--')
+    plt.axvline(x=b1.debut, c='k', linestyle='--')
+    plt.axvline(x=b2.fin, c='k', linestyle='--')
     for b in cl:
         num = b.commande.num
         plt.plot([b1.debut, b2.fin], [num, num], color=indexCouleurs[b.commande], linewidth=10)

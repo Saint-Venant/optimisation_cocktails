@@ -8,16 +8,18 @@ from GenerationDonnees2 import *
 import matplotlib.pyplot as plt
 import numpy as np
 
+random.seed(5)
+
 
 
 ## Ordonne la production
 
 #plan basique : traite les commandes comme elles arrivent
-planBasique = planProduction()
+planBasique = planProduction("buffer")
 for com in listeCommandes:
     planBasique.ajouteCommande(com)
-calculeProduction(planBasique, listeCommandes, listeParametres)
-energieBasique = energie1(listeCommandes)
+calculeProduction(planBasique, listeParametres)
+energieBasique = energie1(planBasique)
 
 #temps d'attente par commande
 Y_tempsAttente = []
@@ -38,7 +40,7 @@ planDepart, listeCoutProd, listeCoutAttente = Recuit2(listeCommandes, listeParam
 temps = listeCommandes[-1].instantCommande
 temps += random.randint(0, periodeArrivee)
 nouvCom = commande(len(listeCommandes), temps)
-a = random.randint(1, A_max)
+a = tire_nb_boissons()
 for j in range(0, a):
     b = boisson(random.randint(1, N_boissons), nouvCom, j)
     nouvCom.ajouteBoisson(b)
@@ -58,8 +60,8 @@ planDepart.ajouteCommande(nouvCom)
 ## Récupération des données initiales : plan de depart
 
 #plan depart : traite la nouvelle commande comme elle arrive
-calculeProduction(planDepart, listeCommandes, listeParametres)
-energieDepart = energie1(listeCommandes)
+calculeProduction(planDepart, listeParametres)
+energieDepart = energie1(planDepart)
 
 #temps d'attente par commande
 Y_tempsAttenteDepart = []
@@ -77,18 +79,18 @@ for com in listeCommandes:
         fraicheurDepart.append(b.livraison - b.fin)
 
 #nombre de commandes préparées en parallèle
-paralleleDepart = nbTachesParallelles(listeCommandes)
+paralleleDepart = nbTachesParalleles(planDepart)
 
 
 ## Test Recuit3
 
-nbIterations = 60000
-print("\n \n \n Calcule de la nouvelle solution")
+nbIterations = 40000
+print("\n \n \nCalcul de la nouvelle solution")
 
 plan, listeCoutProd, listeCoutAttente = Recuit3(planDepart, listeCommandes, listeParametres, indexBoissons, tempsAttenteCommandeMoyen, nbIterations)
 
-calculeProduction(plan, listeCommandes, listeParametres)
-energiePlan = energie1(listeCommandes)
+calculeProduction(plan, listeParametres)
+energiePlan = energie1(plan)
 listeEnergieHybride = []
 for i in range(0, len(listeCoutProd)):
     listeEnergieHybride.append(listeCoutProd[i]+listeCoutAttente[i])
@@ -105,7 +107,7 @@ for com in listeCommandes:
         fraicheurPlan.append(b.livraison - b.fin)
 
 #nombre de commandes préparées en parallèle
-parallelePlan = nbTachesParallelles(listeCommandes)
+parallelePlan = nbTachesParalleles(plan)
 
 ## Résultats
 

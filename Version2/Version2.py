@@ -6,7 +6,9 @@ from collections import OrderedDict
 A_max = 10
 
 #Nombre de type de boissons différentes
-N_boissons = 10
+#N_boissons = 10
+N_boissons = 5
+noms_boissons = ["Blue Lagoon", "California Petit", "California Grand", "Pinte", "Pichet"]
 
 ##
 
@@ -87,22 +89,42 @@ class commande:
 
 
 class planProduction:
-    def __init__(self):
+    def __init__(self, type_prod):
+        '''
+        type_prod = "buffer", "soiree"
+            * "buffer" : commence à produire lorsque la dernière commande est passée
+            * "soiree" : commence à produire dès qu'une commandeest passée
+        '''
+        
         #nombre de sous-unités de production
         self.nbClusters = 0
         
-        #matrice de production : indicé par la commande
+        #matrice de production : indicée par la commande
+        #--self.matProd = OrderedDict()
         self.matProd = OrderedDict()
         
         #liste de clusters
         self.clusters = []
+        
+        #instant où le plan est mis en production
+        self.instantProd = -1
+        self.type_prod = type_prod
+        
+        #ensemble des commandes préparées dans ce plan de production
+        self.commandes = set()
+        
+        #stocke l'historique des clusters déjà produits
+        self.histoire = []
     
     def updateClusters(self):
         #met à jour la liste des clusters
-        self.clusters = [[] for x in range(0, self.nbClusters)]
+        '''self.clusters = [[] for x in range(0, self.nbClusters)]
         for com in self.matProd:
             for j in range(0, len(com.listeBoissons)):
-                self.clusters[self.matProd[com][j]].append(com.listeBoissons[j])
+                self.clusters[self.matProd[com][j]].append(com.listeBoissons[j])'''
+        self.clusters = [[] for x in range(0, self.nbClusters)]
+        for b in self.matProd:
+            self.clusters[self.matProd[b]].append(b)
     
     def ajouteCommande(self, com):
         #ajoute une commande donnée à la fin du plan de production,
@@ -110,12 +132,44 @@ class planProduction:
         
         triIntraCommandes(com)
         
-        ligneMatProd = []
+        #ajoute cette commande à l'ensemble des commandes préparées dans ce plan
+        self.commandes.update([com])
+        
+        #ajuste l'instant de début de production
+        if self.type_prod == "buffer":
+            self.instantProd = max(self.instantProd, com.instantCommande)
+        elif (self.type_prod == "soiree") and (self.nbClusters == 0):
+            self.instantProd = com.instantCommande
+        
+        
+        '''ligneMatProd = []
         
         indice = 0
         b1 = com.getBoisson(indice)
         
-        ligneMatProd.append(self.nbClusters)
+        ligneMatProd.append(self.nbClusters)'''
+        
+        
+        for b in com.listeBoissons:
+            #regarde si b est du même type que le dernier cluster
+            #print(self.nbClusters)
+            #print(b)
+            if self.nbClusters == 0:
+                self.clusters.append([b])
+                self.matProd[b] = 0
+                self.nbClusters += 1
+            elif (b.id == self.clusters[-1][0].id):
+                #alors ajoute cette boisson au dernier cluster
+                self.clusters[-1].append(b)
+                self.matProd[b] = self.nbClusters - 1
+            else:
+                #crée un nouveau cluster
+                self.clusters.append([b])
+                self.matProd[b] = self.nbClusters
+                self.nbClusters += 1
+        
+        
+        '''
         
         nbNouvClusters = 1
         indice += 1
@@ -140,7 +194,7 @@ class planProduction:
             self.nbClusters += (nbNouvClusters - 1)
         else:
             self.matProd[com] = ligneMatProd
-            self.nbClusters += nbNouvClusters
+            self.nbClusters += nbNouvClusters'''
         
         #mise à jour de la liste des clusters
         self.updateClusters()
@@ -152,12 +206,19 @@ class planProduction:
     
     def copy(self):
         '''copie indépendante'''
-        copie = planProduction()
+        copie = planProduction(self.type_prod)
         copie.nbClusters = self.nbClusters
-        for com in self.matProd:
-            copie.matProd[com] = self.matProd[com].copy()
+        copie.instantProd = self.instantProd
+        '''for com in self.matProd:
+            copie.matProd[com] = self.matProd[com].copy()'''
+        for b in self.matProd:
+            copie.matProd[b] = self.matProd[b]
+        for com in self.commandes:
+            copie.commandes.update([com])
         for i in range(0, len(self.clusters)):
             copie.clusters.append(self.clusters[i].copy())
+        for cl in self.histoire:
+            copie.histoire.append(cl)
         return copie
     
     def getCluster(self, indice):
@@ -170,15 +231,27 @@ class planProduction:
         
         triIntraCommandes(com)
         
+        #ajoute cette commande à l'ensemble des commandes préparées dans ce plan
+        self.commandes.update([com])
+        
+        #ajuste l'instant de début de production
+        if self.type_prod == "buffer":
+            self.instantProd = max(self.instantProd, com.instantCommande)
+        elif (self.type_prod == "soiree") and (self.nbClusters == 0):
+            self.instantProd = com.instantCommande
+        
         #parcours les boissons : établit la correspondance entre id et num de cluster
         correspondance = OrderedDict()
-        for c in self.matProd:
+        '''for c in self.matProd:
             for j in range(0, len(c.listeBoissons)):
                 b = c.getBoisson(j)
                 if not(b.id in correspondance):
-                    correspondance[b.id] = self.matProd[c][j]
+                    correspondance[b.id] = self.matProd[c][j]'''
+        for b in self.matProd:
+            if not(b.id in correspondance):
+                correspondance[b.id] = self.matProd[b]
         
-        indice = 0
+        '''indice = 0
         ligneMatProd = []
         while (indice < com.nbBoissons):
             b = com.listeBoissons[indice]
@@ -187,7 +260,12 @@ class planProduction:
                 self.nbClusters += 1
             ligneMatProd.append(correspondance[b.id])
             indice += 1
-        self.matProd[com] = ligneMatProd
+        self.matProd[com] = ligneMatProd'''
+        for b in com.listeBoissons:
+            if not(b.id in correspondance):
+                correspondance[b.id] = self.nbClusters
+                self.nbClusters += 1
+            self.matProd[b] = correspondance[b.id]
         
         #mise à jour de la liste des clusters
         self.updateClusters()
@@ -196,7 +274,52 @@ class planProduction:
         '''
         Supprime la commande com du plan de production
         '''
+    
+    def get_finProd(self):
+        fin = 0
+        if self.nbClusters <= 0:
+            fin = self.instantProd
+        else:
+            fin = self.clusters[-1][0].fin
+        return fin
+    
+    def update_livraison(self, tempsCourant):
+        '''
+        Met à jour un plan de production à partir d'un tempsCourant. Supprime du plan de production toutes les boissons des clusters qui ont déjà été préparés à cette date.
+        Actualise en conséquence l'instant de début de début de production au dernier instants de fin de production des clusters supprimés
         
+        stocke les clusters qui ont déjà été produits (pour une sauvegarde du plan de production sur une soirée)
+        '''
+        
+        clusters_supprimes = []
+        
+        cond = True
+        while cond and (self.nbClusters > 0):
+            #regarde si le premier cluster sur la liste de production a effectivement été produits
+            cl = self.clusters[0]
+            fin_cluster0 = cl[0].fin
+            if fin_cluster0 <= tempsCourant:
+                clusters_supprimes.append(cl)
+                # retire ce cluster du plan de production
+                for b in cl:
+                    del self.matProd[b]
+                for b in self.matProd:
+                    self.matProd[b] -= 1
+                self.nbClusters -= 1
+                del self.clusters[0]
+                # met à jour l'instant de début de production
+                self.instantProd = fin_cluster0
+                cond = True
+            else:
+                cond = False
+        
+        #met à jour la liste des commandes préparées dans ce cluster
+        self.commandes = set()
+        for b in self.matProd:
+            com = b.commande
+            self.commandes.update([com])
+        
+        self.histoire = self.histoire + clusters_supprimes
 
 
 
@@ -330,12 +453,9 @@ def appliqueProd(cluster, tempsDebut, param):
 
 '''fonction permettant de calculer les variables intermédiaires d'après un plan de production donné
 '''
-def calculeProduction(plan, listeCommandes, listeParametres):
+def calculeProduction(plan, listeParametres):
     #instant de début de production global = instant de la dernière commande passée
-    tempsCourant = listeCommandes[-1].instantCommande
-    
-    #instant de fin de preparation
-    tempsFin = 0
+    tempsCourant = plan.instantProd
     
     #indice du cluster en cours de traitement
     indice = 0
@@ -355,11 +475,12 @@ def calculeProduction(plan, listeCommandes, listeParametres):
         
         indice += 1
     
-    #calcule les instants de livraison de chaque commande
-    for com in listeCommandes:
+    for com in plan.commandes:
         instantLivraison = -1
         for b in com.listeBoissons:
             instantLivraison = max(instantLivraison, b.fin)
+        # on ne livre pas une commande avant que celle-ci n'ait été passée
+        instantLivraison = max(instantLivraison, com.instantCommande)
         com.livraison = instantLivraison
         for b in com.listeBoissons:
             b.livraison = instantLivraison
@@ -370,27 +491,29 @@ Obtenir la liste du nombre de tâches effectuées en parallèle pour chaque inst
 >> doit avoir fait appel à la fonction calculeProduction avant
 '''
 
-def nbTachesParallelles(listeCommandes):
+def nbTachesParalleles(plan):
     #instant de début de production
-    instantDebut = listeCommandes[0].listeBoissons[0].debut
+    instantDebut = plan.instantProd
     #instant de fin de production
     instantFin = 0
-    for com in listeCommandes:
-        instantFin = max(instantFin, com.livraison)
-        for b in com.listeBoissons:
-            instantDebut = min(instantDebut, b.debut)
-    instantDebut = int(instantDebut)
-    instantFin = int(instantFin)
     
     listeNbTaches = []
-    for t in range(instantDebut, instantFin+1):
-        nbTaches = 0
-        for com in listeCommandes:
-            enPreparation = False
-            for b in com.listeBoissons:
-                enPreparation = enPreparation or ((b.debut <= t) and (com.livraison > t))
-            if enPreparation:
-                nbTaches += 1
-        listeNbTaches.append(nbTaches)
+    
+    if plan.nbClusters == 0:
+        instantFin = instantDebut
+    else:
+        instantFin = plan.clusters[-1][0].fin
+        instantFin = int(instantFin)
+    
+    
+        for t in range(instantDebut, instantFin+1):
+            nbTaches = 0
+            for com in plan.commandes:
+                enPreparation = False
+                for b in com.listeBoissons:
+                    enPreparation = enPreparation or ((b.debut <= t) and (com.livraison > t))
+                if enPreparation:
+                    nbTaches += 1
+            listeNbTaches.append(nbTaches)
     
     return listeNbTaches
