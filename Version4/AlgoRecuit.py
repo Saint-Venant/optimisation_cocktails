@@ -3,9 +3,6 @@ import GlobalParam as gp
 import numpy as np
 
 
-np.random.seed(1)
-
-
 
 ## Vérification du respect des contraintes
 
@@ -92,6 +89,32 @@ def energie3(plan, referenceAttentes):
     
     return tempsProduction, coutAttente
 
+'''Définition de l'énergie
+>> temps total de production
+>> pénalisation du surcroît d'attente par rapport à un temps de référence
+>> sur toute la durée de la soirée
+'''
+
+def energie4(plan, referenceAttentes):
+    # suppose que la mise à jour des variables intermédiaires calculées selon le plan de production souhaité est faite
+    
+    tempsProduction = 0
+    coef = 1.2
+    if plan.nbClusters > 0:
+        tempsProduction = plan.clusters[-1][-1].fin - plan.instantProd
+    coutAttente = 0
+    toutesCommandes = set()
+    for cl in plan.clusters:
+        for b in cl:
+            com = b.commande
+            toutesCommandes.update([com])
+    for com in toutesCommandes:
+        attente = com.livraison - com.instantCommande
+        borne = 1.2*referenceAttentes[com.num]
+        if (attente > borne):
+            coutAttente += gp.penalisationAttente * (attente - borne)**2
+    return tempsProduction + coutAttente
+
 
 
 ## Voisinage
@@ -99,6 +122,7 @@ def energie3(plan, referenceAttentes):
 '''Voisinage :
     * changer l'affectation d'un matProd[b]
     * peut conduire à ajouter ou supprimer un cluster
+    * ne peut que créer un cluster en fin de production
 '''
 
 def tireVoisin(plan):
@@ -152,10 +176,130 @@ def tireVoisin(plan):
     return nouveauPlan
 
 
+'''Voisinage :
+    * changer l'affectation d'un matProd[b]
+    * peut conduire à ajouter ou supprimer un cluster
+    * peut créer/insérer des clusters n'import où dans la production
+'''
+
+def tireVoisin_complet(plan):
+    #fait une copie de l'ancien plan de production
+    nouveauPlan = plan.copy()
+    
+    #tire au sort une boisson
+    j0 = np.random.randint(len(nouveauPlan.matProd))
+    b = list(nouveauPlan.matProd.keys())[j0]
+    
+    #tire au sort une nouvelle affectation de clusters
+    ancienCluster = nouveauPlan.matProd[b]
+    nouvCluster = np.random.randint(nouveauPlan.nbClusters+1)
+    
+    if (nouvCluster == ancienCluster):
+        pass
+    elif (ancienCluster < nouvCluster-1):
+        # decalage1 : ancien cluster vide, et fusion des deux clusters voisins si ils sont de même type
+        decalage1 = 0
+        if (len(nouveauPlan.clusters[ancienCluster]) == 1) and (ancienCluster == 0):
+            decalage1 = 1
+        elif (len(nouveauPlan.clusters[ancienCluster]) == 1):
+            clAvant = nouveauPlan.clusters[ancienCluster-1]
+            clApres = nouveauPlan.clusters[ancienCluster+1]
+            if (clAvant[0].id == clApres[0].id):
+                decalage1 = 2
+            else:
+                decalage1 = 1
+        
+        # decalage 2 : fusion possible entre le nouveau cluster et son voisin de gauche
+        # decalage 3 : fusion possible entre le nouveau cluster et son voisin de droite
+        decalage2 = 0
+        decalage3 = 0
+        if (nouvCluster < nouveauPlan.nbClusters):
+            clAvant = nouveauPlan.clusters[nouvCluster-1]
+            clApres = nouveauPlan.clusters[nouvCluster]
+            if (b.id == clAvant[0].id):
+                decalage2 = 1
+            elif (b.id == clApres[0].id):
+                decalage3 = 1
+        elif (nouvCluster == nouveauPlan.nbClusters):
+            clAvant = nouveauPlan.clusters[-1]
+            if (b.id == clAvant[0].id):
+                decalage2 = 1
+        
+        # actualisation de matProd
+        for bois in nouveauPlan.matProd:
+            if nouveauPlan.matProd[bois] < ancienCluster:
+                pass
+            elif (nouveauPlan.matProd[bois] > ancienCluster) and (nouveauPlan.matProd[bois] < nouvCluster):
+                nouveauPlan.matProd[bois] -= decalage1
+            elif (nouveauPlan.matProd[bois] >= nouvCluster):
+                nouveauPlan.matProd[bois] += 1 - decalage1 - decalage2 - decalage3
+        
+        # actualisation du nombre de clusters
+        nouveauPlan.nbClusters += 1 - decalage1 - decalage2 - decalage3
+        
+        # cluster de b
+        nouveauPlan.matProd[b] = nouvCluster - decalage1 - decalage2
+    elif (ancienCluster == nouvCluster - 1):
+        pass
+    elif (nouvCluster < ancienCluster -1):
+        # decalage 1
+        decalage1 = 0
+        if (ancienCluster == nouveauPlan.nbClusters - 1) and (len(nouveauPlan.clusters[ancienCluster]) == 1):
+            decalage1 = 1
+        elif (len(nouveauPlan.clusters[ancienCluster]) == 1):
+            clAvant = nouveauPlan.clusters[ancienCluster-1]
+            clApres = nouveauPlan.clusters[ancienCluster+1]
+            if (clAvant[0].id == clApres[0].id):
+                decalage1 = 2
+            else:
+                decalage1 = 1
+        
+        # decalages 2 et 3
+        decalage2 = 0
+        decalage3 = 0
+        if (nouvCluster == 0):
+            clApres = nouveauPlan.clusters[0]
+            if (b.id == clApres[0].id):
+                decalage3 = 1
+        else:
+            clAvant = nouveauPlan.clusters[nouvCluster-1]
+            clApres = nouveauPlan.clusters[nouvCluster]
+            if (b.id == clAvant[0].id):
+                decalage2 = 1
+            elif (b.id == clApres[0].id):
+                decalage3 = 1
+        
+        # actualisation de matProd
+        for bois in nouveauPlan.matProd:
+            if nouveauPlan.matProd[bois] < nouvCluster:
+                pass
+            elif (nouveauPlan.matProd[bois] >= nouvCluster) and (nouveauPlan.matProd[bois] < ancienCluster):
+                nouveauPlan.matProd[bois] += 1 - decalage2 - decalage3
+            else:
+                nouveauPlan.matProd[bois] += 1 - decalage2 - decalage3 - decalage1
+        
+        # actualisation du nombre du clusters
+        nouveauPlan.nbClusters += 1 - decalage1 - decalage2 - decalage3
+        
+        # cluster de b
+        nouveauPlan.matProd[b] = nouvCluster - decalage2
+    elif (nouvCluster == ancienCluster - 1):
+        pass
+    
+    nouveauPlan.updateClusters()
+    return nouveauPlan
+
+
 
 ## Recuit simulé sans contrainte
 
-def Recuit1(listeCommandes, listeParametres, maxIter=100000):
+def Recuit1(listeCommandes, listeParametres, maxIter=100000, voisinage=tireVoisin_complet, T0=20, alphaRefroidissement=0.99996):
+    '''
+    maxIter : nombre d'itérations du recuit
+    voisinage : fonction de voisinage
+    T0 : température initiale
+    alphaRefroidissement : coefficient de refroidissement de la temprérature
+    '''
     
     #initialisation
     plan = planProduction("buffer")
@@ -165,15 +309,11 @@ def Recuit1(listeCommandes, listeParametres, maxIter=100000):
     energie = energie1(plan)
     vectEnergie = np.zeros(maxIter)
     
-    #paramètres initiaux
-    temperatureInitiale = 20
-    alphaRefroidissement = 0.9998
-    
     #variables intermédiaires
     energieBis = energie
     planBis = plan.copy()
     iter = 0
-    temperature = temperatureInitiale
+    temperature = T0
     
     #maintien en mémoire du plan qui donne l'énergie minimum
     planMin = plan.copy()
@@ -186,7 +326,7 @@ def Recuit1(listeCommandes, listeParametres, maxIter=100000):
             print("itération ", iter, "(", iter/maxIter*100, "%),  energie1 =", energie)
         
         #explore un plan de production voisin
-        planBis = tireVoisin(plan)
+        planBis = voisinage(plan)
         calculeProduction(planBis, listeParametres)
         energieBis = energie1(planBis)
         
@@ -219,11 +359,14 @@ def Recuit1(listeCommandes, listeParametres, maxIter=100000):
 ## Recuit simulé avec contraintes
 
 
-def Recuit2(listeCommandes, listeParametres, tempsAttenteCommandeMoyen, maxIter=100000):
+def Recuit2(listeCommandes, listeParametres, tempsAttenteCommandeMoyen, maxIter=100000, voisinage=tireVoisin_complet, T0=20, alphaRefroidissement=0.99996):
     '''
     Intègre la contrainte de fraîcheur dans le recuit
+    maxIter : nombre d'itérations du recuit
+    voisinage : fonction de voisinage
+    T0 : température initiale
+    alphaRefroidissement : coefficient de refroidissement de la temprérature
     '''
-    np.random.seed(1)
     
     #initialisation
     plan = planProduction("buffer")
@@ -236,15 +379,11 @@ def Recuit2(listeCommandes, listeParametres, tempsAttenteCommandeMoyen, maxIter=
     listeCoutProd = np.zeros(maxIter)
     listeCoutAttente = np.zeros(maxIter)
     
-    #paramètres initiaux
-    temperatureInitiale = 20
-    alphaRefroidissement = 0.99996
-    
     #variables intermédiaires
     energieBis = energie
     planBis = plan.copy()
     iter = 0
-    temperature = temperatureInitiale
+    temperature = T0
     
     #maintien en mémoire du plan qui donne l'énergie minimum
     planMin = plan.copy()
@@ -258,12 +397,12 @@ def Recuit2(listeCommandes, listeParametres, tempsAttenteCommandeMoyen, maxIter=
             #print("energieMin = ", energieMin)
         
         #explore un plan de production voisin
-        planBis = tireVoisin(plan)
+        planBis = voisinage(plan)
         calculeProduction(planBis, listeParametres)
         
         respectContraintes = verifieContraintes(planBis)
         while not(respectContraintes):
-            planBis = tireVoisin(plan)
+            planBis = voisinage(plan)
             calculeProduction(planBis, listeParametres)
             respectContraintes = verifieContraintes(planBis)
         coutProdBis, coutAttenteBis = energie2(planBis, tempsAttenteCommandeMoyen)
@@ -304,12 +443,15 @@ def Recuit2(listeCommandes, listeParametres, tempsAttenteCommandeMoyen, maxIter=
 
 
 
-def Recuit3(planDepart, listeParametres, referenceAttentes, maxIter=100000):
+def Recuit3(planDepart, listeParametres, referenceAttentes, maxIter=100000, voisinage=tireVoisin_complet, T0=20, alphaRefroidissement=0.9995):
     '''
     Initialisation au plan passé en paramètres
+    referenceAttentes : liste d'attentes de référence, jugées encore tolérables
+    maxIter : nombre d'itérations du recuit
+    voisinage : fonction de voisinage
+    T0 : température initiale
+    alphaRefroidissement : coefficient de refroidissement de la temprérature
     '''
-    
-    np.random.seed(1)
     
     #initialisation
     plan = planDepart.copy()
@@ -322,16 +464,12 @@ def Recuit3(planDepart, listeParametres, referenceAttentes, maxIter=100000):
     listeCoutProd = np.zeros(maxIter//facteurReduction)
     listeCoutAttente = np.zeros(maxIter//facteurReduction)
     
-    #paramètres initiaux
-    temperatureInitiale = 20
-    alphaRefroidissement = 0.9995
-    
     #variables intermédiaires
     coutProdBis, coutAttenteBis = coutProd, coutAttente
     energieBis = energie
     planBis = plan.copy()
     iter = 0
-    temperature = temperatureInitiale
+    temperature = T0
     
     #maintien en mémoire du plan qui donne l'énergie minimum
     planMin = plan.copy()
@@ -345,12 +483,12 @@ def Recuit3(planDepart, listeParametres, referenceAttentes, maxIter=100000):
             pass
         
         #explore un plan de production voisin
-        planBis = tireVoisin(plan)
+        planBis = voisinage(plan)
         calculeProduction(planBis, listeParametres)
         
         respectContraintes = verifieContraintes(planBis)
         while not(respectContraintes):
-            planBis = tireVoisin(plan)
+            planBis = voisinage(plan)
             calculeProduction(planBis, listeParametres)
             respectContraintes = verifieContraintes(planBis)
         coutProdBis, coutAttenteBis = energie3(planBis, referenceAttentes)

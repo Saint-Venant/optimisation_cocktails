@@ -1,0 +1,19 @@
+Design des tests du fonctionnement en production :
+
+>> objectifs :
+	- trouver les bons paramètres pour les recuits, avec chacun des deux voisinages
+	- comparer les performances de ces deux voisinages afin de choisir le meilleur
+
+
+Pour cela, plusieurs sous-objectifs :
+* créer une fonction de "performance" : mesure l'énergie à la fin d'une soirée optimisée
+
+* créer une fonction pour générer des données aléatoires
+
+* lancer plein de simulations (4 ou 5 sur un même jeu de données, afin d'estimer la performance moyenne d'un algo)
+
+* stocker les résultats de la simu dans un fichier texte/csv >> archive pickle
+
+
+
+>> Autres idées de voisinages à explorer :

@@ -6,8 +6,6 @@ from StructuresProduction import *
 import numpy as np
 import matplotlib.pyplot as plt
 
-np.random.seed(1)
-
 
 def arrondi(x, decimal):
     return int((10**decimal)*x)/10**decimal

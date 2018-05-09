@@ -7,9 +7,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-
-np.random.seed(3)
-
 listeCommandes = gend.listeCommandes_statique
 listeParametres = gend.listeParametres
 

@@ -37,6 +37,33 @@ def genere_commandes_uniformes(instant, periode, nb_commandes):
         liste.append(c)
     return liste
 
+def genere_commandes_soiree(debut, fin, nb):
+    '''
+    génère une liste de commandes entre les intants debut et fin
+    instant d'arrivée tirés selon une loi gaussienne tronquée
+    '''
+    # Distribution (gaussienne) des instants d'arrivée des commandes
+    sigma_arrivees = gp.fin_soiree / 4
+    distrib_gaussian = np.random.normal(gp.fin_soiree/2, sigma_arrivees, int(gp.nb_commandes_soiree*2/3))
+    distrib_uniform = np.random.uniform(gp.debut_soiree, gp.fin_soiree, int(gp.nb_commandes_soiree/3))
+    distrib_arrivees = np.concatenate((distrib_gaussian, distrib_uniform))
+    for i in range(gp.nb_commandes_soiree):
+        while (distrib_arrivees[i] < 0) or (distrib_arrivees[i] > gp.fin_soiree):
+            distrib_arrivees[i] = np.random.normal(gp.fin_soiree/2, sigma_arrivees)
+    distrib_arrivees = np.sort(distrib_arrivees)
+    
+    # liste des commandes de la soirée
+    liste_commandes_soiree = []
+    for i in range(gp.nb_commandes_soiree):
+        temps = distrib_arrivees[i]
+        c = commande(i, temps)
+        nb_boissons = tire_nb_boissons(gp.mu_distrib_b, gp.sigma_distrib_b)
+        for j in range(nb_boissons):
+            b = boisson(np.random.randint(1, gp.N_boissons+1))
+            c.ajouteBoisson(b)
+        liste_commandes_soiree.append(c)
+    
+    return liste_commandes_soiree
 
 ## création des commandes statiques ("buffer")
 

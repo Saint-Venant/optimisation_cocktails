@@ -3,3 +3,4 @@ Version1/__pycache__/*
 Version2/__pycache__/*
 Version3/__pycache__/*
 Version4/__pycache__/*
+*.pickle

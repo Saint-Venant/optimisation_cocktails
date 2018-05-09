@@ -50,9 +50,9 @@ paralleleOpti = nbTachesParalleles(planOpti)
 
 ## Test Recuit1
 
-nbIterations = 40000
+nbIterations = 150000
 
-plan, listeEnergie = Recuit1(listeCommandes, listeParametres, nbIterations)
+plan, listeEnergie = Recuit1(listeCommandes, listeParametres, nbIterations, voisinage=tireVoisin_complet)
 
 calculeProduction(plan, listeParametres)
 tempsProdPlan = energie1(plan)
