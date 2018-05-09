@@ -117,6 +117,16 @@ listeParametres.append([5, 2, 40, 38, 38])
 
 
 
+# bar Beho
+listeParametresBeho = []
+# Apple pie
+listeParametresBeho.append([1, 4, 30, 23, 26])
+# Brazil
+listeParametresBeho.append([2, 2, 45, 25, 28])
+# Cuba libre
+
+
+
 ## Création des commandes sur une soirée ("soiree")
 
 # Distribution (gaussienne) des instants d'arrivée des commandes
