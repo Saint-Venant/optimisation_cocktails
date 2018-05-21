@@ -8,7 +8,7 @@ import numpy as np
 
 
 listeCommandes = gend.listeCommandes_statique
-listeParametres = gend.listeParametres
+listeParametres = gend.listeParametres_California
 
 ## Récupération des données initiales : plan basique
 

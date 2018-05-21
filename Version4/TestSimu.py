@@ -16,14 +16,15 @@ import matplotlib.pyplot as plt
 ## Données générées
 
 listeCommandes_soiree = [x.copy() for x in gend.liste_commandes_soiree]
-listeParametres = gend.listeParametres
+#listeParametres = gend.listeParametres_California
+listeParametres = gend.genere_parametres(gp.nb_commandes_soiree)
 
 debut_soiree = gp.debut_soiree
 
 
 ## Simulation d'une soirée
 
-vect_plans, vect_rush, referenceAttente, vect_listeCommandes, vect_progression = sims.simuleSoiree(listeCommandes_soiree, listeParametres, debut_soiree, maxIter=30000, alphaRefroidissement=0.9998)
+vect_plans, vect_rush, referenceAttente, vect_listeCommandes, vect_progression, deltaTemps = sims.simuleSoiree(listeCommandes_soiree, listeParametres, debut_soiree, maxIter=30000, alphaRefroidissement=0.9998)
 
 planBasique = vect_plans[0]
 planOpti = vect_plans[1]

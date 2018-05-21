@@ -44,7 +44,7 @@ def energie1(plan):
     
     tempsProduction = 0
     if plan.nbClusters > 0:
-        tempsProduction = plan.clusters[-1][-1].fin# - plan.instantProd
+        tempsProduction = plan.clusters[-1][-1].fin - plan.instantProd
     
     return tempsProduction
 
@@ -463,6 +463,7 @@ def Recuit3(planDepart, listeParametres, referenceAttentes, maxIter=100000, vois
     facteurReduction = 10
     listeCoutProd = np.zeros(maxIter//facteurReduction)
     listeCoutAttente = np.zeros(maxIter//facteurReduction)
+    listeTemperature = np.zeros(maxIter//facteurReduction)
     
     #variables intermédiaires
     coutProdBis, coutAttenteBis = coutProd, coutAttente
@@ -515,6 +516,7 @@ def Recuit3(planDepart, listeParametres, referenceAttentes, maxIter=100000, vois
         if iter % facteurReduction == 0:
             listeCoutProd[iter//facteurReduction] = coutProd
             listeCoutAttente[iter//facteurReduction] = coutAttente
+            listeTemperature[iter//facteurReduction] = temperature
         iter += 1
         temperature *= alphaRefroidissement
         
@@ -523,7 +525,7 @@ def Recuit3(planDepart, listeParametres, referenceAttentes, maxIter=100000, vois
             planMin = plan.copy()
             energieMin = energie
     
-    return planMin, listeCoutProd, listeCoutAttente
+    return planMin, listeCoutProd, listeCoutAttente, listeTemperature
 
 
 

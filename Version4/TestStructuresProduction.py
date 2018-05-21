@@ -31,7 +31,7 @@ if aff_com:
 
 ## génération des paramètres du temps de préparation
 
-listeParametres = gend.listeParametres
+listeParametres = gend.listeParametres_California
 
 if aff_param:
     #affichage des paramètres

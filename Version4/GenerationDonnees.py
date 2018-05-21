@@ -81,39 +81,46 @@ listeCommandes_statique = genere_commandes_uniformes(0, gp.periodeArrivee, gp.nb
 Stockage des paramètres :
 param = listeParametres[i] >> parametres des boissons de type i+1
 param = [idTypeBoisson, nbOpti, coef1, coef2, coef3]
-'''
-
-'''exemple d'un parametre : l
-    l = [idTypeBoisson, nbOpti, coef1, coef2, coef3]
-    nbOpti = nombre de boissons pour lequel le temps de préparation est le plus rentable (3 par déafaut)
-'''
-
-'''
-for i in range(0, N_boissons):
-    l = []
-    l.append(i+1)
-    nbOpti = random.randint(1, 5)
-    l.append(nbOpti)
-    a = 5*(0.5+random.random())/1.5
-    l.append(a)
-    b = (0.5+random.random())*(1/1.5)*0.6*a
-    l.append(b)
-    l.append(0.3*a + 0.7*b)
-    listeParametres.append(l)
-'''
 
 
-listeParametres = []
+exemple d'un parametre : l
+l = [idTypeBoisson, nbOpti, coef1, coef2, coef3]
+nbOpti = nombre de boissons pour lequel le temps de préparation est le plus rentable (3 par déafaut)
+'''
+
+def genere_parametres(nb):
+    '''
+    Génère un jeu de paramètres (pour nb types de boissons différents) artificiels
+    '''
+    listeParam = []
+    np.random.seed(1)
+    for i in range(nb):
+        l = [i+1]
+        nbOpti = np.random.randint(1, 6)
+        a = np.random.normal(20, 8)
+        while (a > 40) or (a < 13):
+            a = np.random.normal(20, 8)
+        x = np.random.normal(0.2, 0.15)
+        while (x < 0.05) or (x > 0.35):
+            x = np.random.normal(0.2, 0.15)
+        b = (1-x)*a
+        c = 0.3*a + 0.7*b
+        l += [nbOpti, a, b, c]
+        listeParam.append(l)
+    return listeParam
+
+
+listeParametres_California = []
 #Blue Lagoon
-listeParametres.append([1, 2, 22, 0.7*22, 0.85*22])
+listeParametres_California.append([1, 2, 22, 0.7*22, 0.85*22])
 #California Petit
-listeParametres.append([2, 2, 14, 10, 12])
+listeParametres_California.append([2, 2, 14, 10, 12])
 #California Grand
-listeParametres.append([3, 2, 26, 23, 25])
+listeParametres_California.append([3, 2, 26, 23, 25])
 #Pinte
-listeParametres.append([4, 5, 13, 12, 12])
+listeParametres_California.append([4, 5, 13, 12, 12])
 #Pichet
-listeParametres.append([5, 2, 40, 38, 38])
+listeParametres_California.append([5, 2, 40, 38, 38])
 
 
 

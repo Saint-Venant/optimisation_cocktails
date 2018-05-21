@@ -9,7 +9,7 @@ Contient l'ensemble des paramètres du système
 A_max = 10
 
 # Nombre de types de boissons différents
-N_boissons = 5
+N_boissons = 8
 noms_boissons = ["Blue Lagoon", "California Petit", "California Grand", "Pinte", "Pichet"]
 
 

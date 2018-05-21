@@ -12,6 +12,7 @@ import GenerationDonnees as gend
 import OutilsGraphiques as outg
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 
 
@@ -27,6 +28,8 @@ def simuleSoiree(liste_commandes_soiree, listeParametres, debut_soiree, T0=20, a
     maxIter : nombre d'itérations du recuit
     voisinage : fonction de voisinage du recuit
     '''
+    
+    t1 = time.clock()
     
     # le temps est discrétisé
     temps = debut_soiree
@@ -136,9 +139,9 @@ def simuleSoiree(liste_commandes_soiree, listeParametres, debut_soiree, T0=20, a
                     for com in vect_plans[0].commandes:
                         referenceAttente[com.num] = com.livraison - com.instantCommande
                 if i == 2:
-                    vect_plans[i], lProd, lAttente = Recuit3(plan, listeParametres, referenceAttente, maxIter=maxIter, voisinage=voisinage, T0=T0, alphaRefroidissement=alphaRefroidissement)
+                    vect_plans[i], lProd, lAttente, lTemperature = Recuit3(plan, listeParametres, referenceAttente, maxIter=maxIter, voisinage=voisinage, T0=T0, alphaRefroidissement=alphaRefroidissement)
                     plan = vect_plans[i]
-                    vect_progression.append([lProd, lAttente])
+                    vect_progression.append([lProd, lAttente, lTemperature])
                 calculeProduction(plan, listeParametres)
         
             # condition de terminaison de la boucle temporelle
@@ -150,4 +153,6 @@ def simuleSoiree(liste_commandes_soiree, listeParametres, debut_soiree, T0=20, a
             cond_termine = True
             print("problème")
     
-    return vect_plans, vect_rush, referenceAttente, liste_commandes_servies, vect_progression
+    t2 = time.clock()
+    
+    return vect_plans, vect_rush, referenceAttente, liste_commandes_servies, vect_progression, t2-t1

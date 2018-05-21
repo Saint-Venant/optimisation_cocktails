@@ -8,7 +8,7 @@ import numpy as np
 
 
 listeCommandes = [x.copy() for x in gend.listeCommandes_statique]
-listeParametres = [x.copy() for x in gend.listeParametres]
+listeParametres = [x.copy() for x in gend.genere_parametres(gp.nb_commandes_soiree)]
 
 
 ## Récupération des données initiales : plan basique
