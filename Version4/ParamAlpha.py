@@ -1,5 +1,5 @@
 '''
-Teste le bon paramètre de refroidissement pour le recuit avec voisinage complet
+Teste le bon paramètre de refroidissement pour le recuit avec les deux types de voisinage
 '''
 
 from StructuresProduction import *
@@ -25,8 +25,9 @@ listeCommandes_soiree = gend.genere_commandes_soiree(debut, fin, nb)
 # voisinage complet
 vect_plans_complet, vect_rush_complet, referenceAttente_complet, vect_listeCommandes_complet, vect_progression_complet, deltaTemps_complet = sims.simuleSoiree(listeCommandes_soiree, listeParametres, debut, maxIter=30000, alphaRefroidissement=0.9998, voisinage=tireVoisin_complet)
 
+'''
 # voisinage réduit
-vect_plans_reduit, vect_rush_reduit, referenceAttente_reduit, vect_listeCommandes_reduit, vect_progression_reduit, deltaTemps_reduit = sims.simuleSoiree(listeCommandes_soiree, listeParametres, debut, maxIter=30000, alphaRefroidissement=0.9998, voisinage=tireVoisin)
+vect_plans_reduit, vect_rush_reduit, referenceAttente_reduit, vect_listeCommandes_reduit, vect_progression_reduit, deltaTemps_reduit = sims.simuleSoiree(listeCommandes_soiree, listeParametres, debut, maxIter=7500, alphaRefroidissement=0.9998, voisinage=tireVoisin)
 
 
 # Analyse
@@ -36,8 +37,14 @@ print(n_prog_complet)
 i = 20
 plt.figure()
 plt.plot(vect_progression_complet[i][2], 'ro')
+plt.title("Evolution de la température pour le voisinage complet")
+plt.xlabel("itérations")
+plt.ylabel("température")
 plt.figure()
 plt.plot(vect_progression_complet[i][0] + vect_progression_complet[i][1], 'bo')
+plt.title("Evolution de l'énergie pour le voisinage complet")
+plt.xlabel("itérations")
+plt.ylabel("énergie")
 plt.show()
 
 n_prog_reduit = len(vect_progression_reduit)
@@ -46,6 +53,12 @@ print(n_prog_reduit)
 i = 20
 plt.figure()
 plt.plot(vect_progression_reduit[i][2], 'ro')
+plt.title("Evolution de la température pour le voisinage réduit")
+plt.xlabel("itérations")
+plt.ylabel("température")
 plt.figure()
 plt.plot(vect_progression_reduit[i][0] + vect_progression_reduit[i][1], 'bo')
-plt.show()
+plt.title("Evolution de l'énergie pour le voisinage réduit")
+plt.xlabel("itérations")
+plt.ylabel("énergie")
+plt.show()'''

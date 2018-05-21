@@ -8,8 +8,8 @@ import numpy as np
 ## Controle des affichages graphiques
 
 plot_param = False
-plot_fonction_prod = False
-plot_all_param = False
+plot_fonction_prod = True
+plot_all_param = True
 plot_attente_boisson = False
 plot_attente_commande = False
 plot_preparation_parallele = False
@@ -31,7 +31,7 @@ if aff_com:
 
 ## génération des paramètres du temps de préparation
 
-listeParametres = gend.listeParametres_California
+listeParametres = gend.genere_parametres(gp.nbCommandes_statique)
 
 if aff_param:
     #affichage des paramètres
@@ -86,7 +86,7 @@ if plot_all_param:
         y = []
         for q in x:
             y.append(prod(q, param))
-        plt.plot(x, y, label=gp.noms_boissons[param[0]-1])
+        plt.plot(x, y, label="boisson {}".format(param[0]))#, label=gp.noms_boissons[param[0]-1])
     plt.legend()
     plt.show()
 

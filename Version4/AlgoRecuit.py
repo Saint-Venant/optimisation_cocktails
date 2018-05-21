@@ -471,6 +471,8 @@ def Recuit3(planDepart, listeParametres, referenceAttentes, maxIter=100000, vois
     planBis = plan.copy()
     iter = 0
     temperature = T0
+    temperatureFinale = 0.15
+    alphaRefroidissement = np.exp((np.log(temperatureFinale) - np.log(T0))/maxIter)
     
     #maintien en mémoire du plan qui donne l'énergie minimum
     planMin = plan.copy()
